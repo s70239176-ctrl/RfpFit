@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    background: #0b0c0a;
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-ink font-sans text-fg antialiased;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-serif font-medium tracking-tight;
+  }
+  a {
+    @apply underline decoration-rule underline-offset-4 transition-colors duration-150 hover:decoration-copper;
+  }
+  :focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-copper;
+  }
+  ::selection {
+    background: #c47a3a55;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-lg border border-rule bg-paper;
+  }
+  .label {
+    @apply text-xs font-medium uppercase tracking-[0.12em] text-muted;
+  }
+  .field {
+    @apply w-full rounded border border-rule bg-ink px-3 py-2 text-fg placeholder:text-muted/60;
+  }
+  .field:disabled {
+    @apply opacity-50;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center rounded border px-4 py-2 text-sm font-medium no-underline transition-colors duration-150;
+  }
+  .btn-primary {
+    @apply btn border-copper bg-copper text-ink hover:bg-[#d48a48] disabled:cursor-not-allowed disabled:border-rule disabled:bg-rule disabled:text-muted;
+  }
+  .btn-quiet {
+    @apply btn border-rule bg-transparent text-fg hover:border-muted disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-rule;
+  }
+  .fade-in {
+    animation: fade-in 180ms ease-out both;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in {
+    animation: none;
+  }
+}
