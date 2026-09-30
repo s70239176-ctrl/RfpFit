@@ -1,0 +1,15 @@
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+node_modules/
+.next/
+out/
+artifacts/
+__pycache__/
+.pytest_cache/
+*.tsbuildinfo
+next-env.d.ts
+.vercel/
+.genlayer/
