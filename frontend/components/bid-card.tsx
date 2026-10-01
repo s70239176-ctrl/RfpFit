@@ -39,19 +39,19 @@ export function BidCard({ rfp, bid, verdict, isWinner, selected, deadlinePassed,
 
   return (
     <article
-      className={`panel p-5 ${isWinner ? "border-l-2 border-l-copper" : ""} ${selected ? "ring-1 ring-muted/40" : ""}`}
+      className={`panel p-5 ${isWinner ? "border-l-2 border-l-primary" : ""} ${selected ? "ring-1 ring-muted/40" : ""}`}
       aria-label={`Bid ${bid.bidId}`}
     >
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <button type="button" onClick={onSelect} className="text-left font-mono text-sm hover:text-copper" aria-pressed={selected}>
+          <button type="button" onClick={onSelect} className="text-left font-mono text-sm hover:text-primary" aria-pressed={selected}>
             {bid.bidId}
           </button>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
             <CopyAddress address={bid.bidder} />
             <span>{formatTime(bid.createdTs)}</span>
             {sponsorBid && <span className="rounded-sm border border-partial/50 px-1.5 py-0.5 text-partial">Sponsor is bidder</span>}
-            {isWinner && <span className="rounded-sm border border-copper/60 px-1.5 py-0.5 text-copper">Winner</span>}
+            {isWinner && <span className="rounded-sm border border-primary/60 px-1.5 py-0.5 text-primary">Winner</span>}
           </p>
         </div>
       </header>

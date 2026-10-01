@@ -9,11 +9,11 @@ export function Shell({ children }: { children: ReactNode }) {
     <WalletProvider>
       <header className="border-b border-rule">
         <div className="mx-auto flex max-w-page items-center justify-between px-4 py-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2.5 font-serif text-xl tracking-tight no-underline">
+          <Link href="/" className="flex items-center gap-2.5 text-xl tracking-tight no-underline">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/rfpfit-mark.svg" alt="" width={28} height={28} />
             <span>
-              Rfp<span className="text-copper">Fit</span>
+              Rfp<span className="text-primary">Fit</span>
             </span>
           </Link>
           <nav className="flex items-center gap-5 text-sm">

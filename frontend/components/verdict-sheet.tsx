@@ -17,7 +17,7 @@ export function VerdictSheet({ verdict }: { verdict: Verdict }) {
           <VerdictWord verdict={verdict.verdict} className="text-3xl uppercase" />
         </div>
         <div className="text-right">
-          <p className="font-serif text-3xl leading-none">
+          <p className="text-3xl leading-none">
             {verdict.score}
             <span className="text-base text-muted">/100</span>
           </p>

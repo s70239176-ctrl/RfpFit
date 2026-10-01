@@ -48,8 +48,8 @@ export default function Home() {
     <div className="space-y-16">
       <section className="grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:items-end">
         <div>
-          <h1 className="text-5xl leading-[1.05] sm:text-6xl">
-            Rfp<span className="text-copper">Fit</span>
+          <h1 className="text-5xl leading-[1.04] sm:text-[64px]">
+            Rfp<span className="text-primary">Fit</span>
           </h1>
           <p className="mt-4 max-w-xl text-lg text-muted">
             A brief with teeth. Prize locked. Bids judged against the written requirements. Winner paid by the contract.
@@ -72,12 +72,12 @@ export default function Home() {
           ].map(([k, v]) => (
             <div key={k} className="bg-paper p-4">
               <dt className="label">{k}</dt>
-              <dd className="mt-1 font-serif text-3xl">{v}</dd>
+              <dd className="mt-1 text-3xl">{v}</dd>
             </div>
           ))}
           <div className="col-span-2 bg-paper p-4">
             <dt className="label">Refunded (GEN)</dt>
-            <dd className="mt-1 font-serif text-3xl">{data ? formatGen(data.stats.totalRefunded) : "-"}</dd>
+            <dd className="mt-1 text-3xl">{data ? formatGen(data.stats.totalRefunded) : "-"}</dd>
           </div>
         </dl>
       </section>
@@ -102,13 +102,13 @@ export default function Home() {
               <li key={r.id}>
                 <Link href={`/rfp/${r.id}`} className="flex flex-wrap items-center justify-between gap-3 p-4 no-underline hover:bg-paper">
                   <span>
-                    <span className="font-serif text-lg">{r.title}</span>
+                    <span className="text-lg">{r.title}</span>
                     <span className="ml-3 text-sm text-muted">
                       #{r.id} · {r.bidCount} {r.bidCount === 1 ? "bid" : "bids"}
                     </span>
                   </span>
                   <span className="flex items-center gap-4">
-                    <span className="font-serif text-lg text-copper">{formatGen(r.prizeWei)} GEN</span>
+                    <span className="text-lg text-primary">{formatGen(r.prizeWei)} GEN</span>
                     <StatusChip status={displayStatus(r, now)} />
                   </span>
                 </Link>
@@ -126,7 +126,7 @@ export default function Home() {
           <ol className="space-y-3">
             {STEPS.map((s, i) => (
               <li key={s} className="flex gap-3">
-                <span className="mt-0.5 rounded-sm bg-copper/15 px-1.5 py-0.5 font-mono text-xs text-copper">{i + 1}</span>
+                <span className="mt-0.5 rounded-sm bg-primary/15 px-1.5 py-0.5 font-mono text-xs text-primary">{i + 1}</span>
                 <span>{s}</span>
               </li>
             ))}

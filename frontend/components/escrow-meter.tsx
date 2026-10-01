@@ -11,7 +11,7 @@ export function EscrowMeter({ rfp, nowMs }: { rfp: Rfp; nowMs: number }) {
         <span className="label">Escrowed prize</span>
         <StatusChip status={status} />
       </div>
-      <p className="mt-3 font-serif text-4xl tracking-tight text-copper">
+      <p className="mt-3 text-4xl tracking-tight text-primary">
         {formatGen(rfp.prizeWei, 6)} <span className="text-xl text-muted">GEN</span>
       </p>
       <p className="mt-1 font-mono text-xs text-muted">{rfp.prizeWei.toString()} wei</p>

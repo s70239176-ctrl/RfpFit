@@ -103,7 +103,7 @@ export function TxPanel({ state, onRetry, onDismiss }: { state: TxState; onRetry
     <ol role="status" aria-live="polite" className="fade-in space-y-1.5 rounded border border-rule p-3 text-sm">
       {STEPS.map((s, i) => (
         <li key={s.phase} className={i < active ? "text-muted line-through" : i === active ? "text-fg" : "text-muted/50"}>
-          <span className="mr-2 inline-block w-4 font-mono text-xs text-copper">{i === active ? ">" : i < active ? "-" : ""}</span>
+          <span className="mr-2 inline-block w-4 font-mono text-xs text-primary">{i === active ? ">" : i < active ? "-" : ""}</span>
           {s.text}
         </li>
       ))}

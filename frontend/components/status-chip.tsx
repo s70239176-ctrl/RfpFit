@@ -9,7 +9,7 @@ export function displayStatus(rfp: Rfp, nowMs: number): DisplayStatus {
 }
 
 const STATUS_STYLE: Record<DisplayStatus, string> = {
-  OPEN: "border-copper/60 text-copper",
+  OPEN: "border-primary/60 text-primary",
   JUDGING: "border-partial/60 text-partial",
   PAID: "border-good/60 text-good",
   REFUNDED: "border-muted/50 text-muted",
@@ -29,7 +29,7 @@ const VERDICT_STYLE: Record<VerdictLabel, string> = {
 
 export function VerdictWord({ verdict, className = "" }: { verdict: VerdictLabel; className?: string }) {
   return (
-    <span className={`font-serif tracking-tight ${VERDICT_STYLE[verdict]} ${className}`}>
+    <span className={`tracking-tight ${VERDICT_STYLE[verdict]} ${className}`}>
       {verdict.replace("_", "-")}
     </span>
   );

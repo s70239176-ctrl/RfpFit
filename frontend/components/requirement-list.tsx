@@ -47,7 +47,7 @@ export function RequirementList({
             const m = mark(verdict, r.id);
             return (
               <li key={r.id} className="flex items-start gap-3 p-3">
-                <span className="mt-0.5 rounded-sm bg-copper/15 px-1.5 py-0.5 font-mono text-xs text-copper">{r.id}</span>
+                <span className="mt-0.5 rounded-sm bg-primary/15 px-1.5 py-0.5 font-mono text-xs text-primary">{r.id}</span>
                 <span className="flex-1">{r.text}</span>
                 {m && <span className={`text-xs font-medium uppercase tracking-wide ${MARK_STYLE[m]}`}>{MARK_TEXT[m]}</span>}
               </li>
@@ -60,7 +60,7 @@ export function RequirementList({
             {ids.map((id) => {
               const m = mark(verdict, id);
               return (
-                <span key={id} className="rounded-sm bg-copper/15 px-1.5 py-0.5 font-mono text-xs text-copper">
+                <span key={id} className="rounded-sm bg-primary/15 px-1.5 py-0.5 font-mono text-xs text-primary">
                   {id}
                   {m && <span className={`ml-1 ${MARK_STYLE[m]}`}>{MARK_TEXT[m]}</span>}
                 </span>
