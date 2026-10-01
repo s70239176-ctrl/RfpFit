@@ -25,6 +25,13 @@ export function VerdictSheet({ verdict }: { verdict: Verdict }) {
         </div>
       </div>
 
+      <div className="mt-3 h-1.5 overflow-hidden rounded-pill bg-rule" role="img" aria-label={`Score ${verdict.score} out of 100`}>
+        <div
+          className={`h-full transition-[width] duration-700 ${verdict.verdict === "RESPONSIVE" ? "bg-good" : verdict.verdict === "PARTIAL" ? "bg-partial" : "bg-bad"}`}
+          style={{ width: `${Math.max(0, Math.min(100, verdict.score))}%` }}
+        />
+      </div>
+
       {verdict.reasons.length > 0 && (
         <ul className="mt-4 space-y-1.5 text-sm">
           {verdict.reasons.map((r, i) => (

@@ -33,11 +33,22 @@
   .panel {
     @apply rounded-lg border border-rule bg-paper;
   }
+  .card-lift {
+    transition:
+      transform 200ms ease,
+      border-color 200ms ease,
+      box-shadow 200ms ease;
+  }
+  .card-lift:hover {
+    transform: translateY(-2px);
+    border-color: #3f3f46;
+    box-shadow: 0 12px 32px -16px rgba(255, 90, 31, 0.25);
+  }
   .label {
     @apply font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted;
   }
   .field {
-    @apply w-full rounded border border-rule bg-ink px-3 py-2 text-fg placeholder:text-muted/60;
+    @apply w-full rounded border border-rule bg-ink px-3 py-2 text-fg placeholder:text-muted/60 transition-colors duration-150 focus:border-primary;
   }
   .field:disabled {
     @apply opacity-50;
@@ -51,8 +62,35 @@
   .btn-quiet {
     @apply btn border-rule bg-transparent text-fg hover:border-muted disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-rule;
   }
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse at 30% 0%, #000 0%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at 30% 0%, #000 0%, transparent 70%);
+  }
   .fade-in {
     animation: fade-in 180ms ease-out both;
+  }
+  /* Staggered entrance: set --i on the element. */
+  .reveal {
+    animation: rise 650ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 70ms);
+  }
+  /* Masked line reveal for display headings. */
+  .mask-line {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.08em;
+  }
+  .mask-line > span {
+    display: block;
+    animation: mask-up 800ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 120ms + 80ms);
+  }
+  .flow-dot {
+    animation: flow 3.2s linear infinite;
   }
 }
 
@@ -67,8 +105,48 @@
   }
 }
 
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes mask-up {
+  from {
+    transform: translateY(108%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes flow {
+  from {
+    left: 0;
+    opacity: 0;
+  }
+  10%,
+  90% {
+    opacity: 1;
+  }
+  to {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .fade-in {
-    animation: none;
+  .fade-in,
+  .reveal,
+  .mask-line > span,
+  .flow-dot,
+  .card-lift {
+    animation: none !important;
+    transition: none !important;
   }
 }

@@ -8,7 +8,7 @@ import { useWallet } from "@/components/wallet-bar";
 import { LIMITS, REQ_ID_RE } from "@/lib/constants";
 import { createRfp } from "@/lib/contract";
 import { configProblem } from "@/lib/genlayer";
-import { parseGen } from "@/lib/format";
+import { formatGen, formatTime, parseGen, truncateAddress } from "@/lib/format";
 
 function toLocalInput(d: Date): string {
   const p = (n: number) => String(n).padStart(2, "0");
@@ -86,81 +86,104 @@ export default function NewRfp() {
     });
   }
 
-  return (
-    <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr]">
-      <form onSubmit={submit} className="space-y-6" noValidate>
-        <header>
-          <h1 className="text-4xl">New RFP</h1>
-          <p className="mt-2 text-muted">
-            The requirements and prize freeze once the first bid lands. The contract holds the prize until it pays a winner or refunds you.
-          </p>
-        </header>
+  const prizeLabel = valueWei === null ? "-" : formatGen(valueWei, 6);
+  const sections = "panel reveal space-y-5 p-6";
 
-        <div>
-          <label htmlFor="title" className="label">Title</label>
-          <input id="title" className="field mt-1" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={LIMITS.title.max} disabled={busy} />
-        </div>
-        <div>
-          <label htmlFor="summary" className="label">Summary</label>
-          <textarea id="summary" className="field mt-1 min-h-20" value={summary} onChange={(e) => setSummary(e.target.value)} maxLength={LIMITS.summary.max} disabled={busy} />
-        </div>
-        <div>
-          <label htmlFor="reqs" className="label">Requirements (one per line, start each with its ID)</label>
-          <textarea
-            id="reqs"
-            className="field mt-1 min-h-40 font-mono text-sm"
-            value={requirements}
-            onChange={(e) => {
-              setRequirements(e.target.value);
-              if (!idsCsv) setIdsCsv(detectIds(e.target.value));
+  return (
+    <div className="space-y-6">
+      <header className="reveal">
+        <p className="label">Sponsor</p>
+        <h1 className="mt-2 text-4xl font-medium sm:text-5xl">New RFP</h1>
+        <p className="mt-3 max-w-2xl text-muted">
+          The requirements and prize freeze once the first bid lands. The contract holds the prize until it pays a winner or refunds you.
+        </p>
+      </header>
+
+      <div className="grid gap-6 lg:grid-cols-12">
+        <form onSubmit={submit} className="space-y-6 lg:col-span-8" noValidate>
+          <section className={sections} style={{ ["--i" as string]: 1 }}>
+            <h2 className="flex items-center gap-3 text-xl"><span className="font-mono text-xs font-semibold text-primary">01</span> Brief</h2>
+            <div>
+              <label htmlFor="title" className="label">Title</label>
+              <input id="title" className="field mt-1" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={LIMITS.title.max} disabled={busy} />
+            </div>
+            <div>
+              <label htmlFor="summary" className="label">Summary</label>
+              <textarea id="summary" className="field mt-1 min-h-20" value={summary} onChange={(e) => setSummary(e.target.value)} maxLength={LIMITS.summary.max} disabled={busy} />
+            </div>
+          </section>
+
+          <section className={sections} style={{ ["--i" as string]: 2 }}>
+            <h2 className="flex items-center gap-3 text-xl"><span className="font-mono text-xs font-semibold text-primary">02</span> Rubric</h2>
+            <div>
+              <label htmlFor="reqs" className="label">Requirements (one per line, start each with its ID)</label>
+              <textarea
+                id="reqs"
+                className="field mt-1 min-h-40 font-mono text-sm"
+                value={requirements}
+                onChange={(e) => {
+                  setRequirements(e.target.value);
+                  if (!idsCsv) setIdsCsv(detectIds(e.target.value));
+                }}
+                maxLength={LIMITS.requirements.max}
+                disabled={busy}
+              />
+            </div>
+            <div>
+              <label htmlFor="ids" className="label">Requirement IDs</label>
+              <div className="mt-1 flex gap-2">
+                <input id="ids" className="field font-mono" value={idsCsv} onChange={(e) => setIdsCsv(e.target.value)} placeholder="R1,R2,R3" disabled={busy} />
+                <button type="button" className="btn-quiet whitespace-nowrap" onClick={() => setIdsCsv(detectIds(requirements))} disabled={busy}>
+                  Detect
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section className={sections} style={{ ["--i" as string]: 3 }}>
+            <h2 className="flex items-center gap-3 text-xl"><span className="font-mono text-xs font-semibold text-primary">03</span> Escrow</h2>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="deadline" className="label">Bid deadline (your local time)</label>
+                <input id="deadline" type="datetime-local" className="field mt-1" value={deadline} onChange={(e) => setDeadline(e.target.value)} disabled={busy} />
+              </div>
+              <div>
+                <label htmlFor="prize" className="label">Prize (GEN)</label>
+                <input id="prize" inputMode="decimal" className="field mt-1 font-mono" value={prize} onChange={(e) => setPrize(e.target.value)} placeholder="0.5" disabled={busy} />
+              </div>
+            </div>
+            {touched && problem && <p role="alert" className="text-sm text-bad">{problem}</p>}
+            {configProblem() && <p role="alert" className="text-sm text-bad">{configProblem()}</p>}
+            <button type="submit" className="btn-primary w-full px-5 py-2.5 sm:w-auto" disabled={busy || Boolean(configProblem())}>
+              {busy ? "Locking prize" : account ? "Lock prize" : "Connect wallet to lock prize"}
+            </button>
+            <TxPanel state={tx.state} onRetry={tx.retry} onDismiss={tx.reset} />
+          </section>
+        </form>
+
+        <div className="space-y-6 lg:sticky lg:top-20 lg:col-span-4 lg:self-start">
+          <section className="panel reveal p-6" style={{ ["--i" as string]: 2 }} aria-label="Escrow preview">
+            <p className="label">Escrow preview</p>
+            <p className="mt-2 text-3xl font-medium tracking-tight text-primary">{prizeLabel} <span className="text-base text-muted">GEN</span></p>
+            <dl className="mt-4 divide-y divide-rule text-sm">
+              <div className="flex justify-between gap-3 py-2.5"><dt className="text-muted">Requirements</dt><dd className="font-mono text-xs">{ids.length || "-"}</dd></div>
+              <div className="flex justify-between gap-3 py-2.5"><dt className="text-muted">Deadline</dt><dd className="text-right">{Number.isFinite(deadlineTs) ? formatTime(deadlineTs) : "-"}</dd></div>
+              <div className="flex justify-between gap-3 py-2.5"><dt className="text-muted">Sponsor</dt><dd className="font-mono text-xs">{account ? truncateAddress(account) : "Not connected"}</dd></div>
+            </dl>
+            <p className="mt-3 text-xs text-muted">Prize is locked in the contract. This UI cannot move it.</p>
+          </section>
+          <SamplePack
+            mode="rfp"
+            onFill={(s) => {
+              setTitle(s.title);
+              setSummary(s.summary);
+              setRequirements(s.requirementsText);
+              setIdsCsv(s.requirementIds);
+              setTouched(false);
+              tx.reset();
             }}
-            maxLength={LIMITS.requirements.max}
-            disabled={busy}
           />
         </div>
-        <div>
-          <label htmlFor="ids" className="label">Requirement IDs</label>
-          <div className="mt-1 flex gap-2">
-            <input id="ids" className="field font-mono" value={idsCsv} onChange={(e) => setIdsCsv(e.target.value)} placeholder="R1,R2,R3" disabled={busy} />
-            <button type="button" className="btn-quiet whitespace-nowrap" onClick={() => setIdsCsv(detectIds(requirements))} disabled={busy}>
-              Detect
-            </button>
-          </div>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div>
-            <label htmlFor="deadline" className="label">Bid deadline (your local time)</label>
-            <input id="deadline" type="datetime-local" className="field mt-1" value={deadline} onChange={(e) => setDeadline(e.target.value)} disabled={busy} />
-          </div>
-          <div>
-            <label htmlFor="prize" className="label">Prize (GEN)</label>
-            <input id="prize" inputMode="decimal" className="field mt-1 font-mono" value={prize} onChange={(e) => setPrize(e.target.value)} placeholder="0.5" disabled={busy} />
-          </div>
-        </div>
-
-        {touched && problem && (
-          <p role="alert" className="text-sm text-bad">{problem}</p>
-        )}
-        {configProblem() && <p role="alert" className="text-sm text-bad">{configProblem()}</p>}
-
-        <button type="submit" className="btn-primary w-full sm:w-auto" disabled={busy || Boolean(configProblem())}>
-          {busy ? "Locking prize" : account ? "Lock prize" : "Connect wallet to lock prize"}
-        </button>
-        <TxPanel state={tx.state} onRetry={tx.retry} onDismiss={tx.reset} />
-      </form>
-
-      <div className="lg:pt-24">
-        <SamplePack
-          mode="rfp"
-          onFill={(s) => {
-            setTitle(s.title);
-            setSummary(s.summary);
-            setRequirements(s.requirementsText);
-            setIdsCsv(s.requirementIds);
-            setTouched(false);
-            tx.reset();
-          }}
-        />
       </div>
     </div>
   );
