@@ -4,7 +4,7 @@ Sponsors of bounties and grants pay out on whoever writes the best pitch, or on 
 
 ## Live demo
 
-**Not deployed yet.** Set after Phase 6 (Vercel URL goes here).
+https://rfp-fit.vercel.app/
 
 ## Contract
 
