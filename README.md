@@ -17,10 +17,19 @@ Deployed by the project owner to GenLayer Studionet. Always verify the RPC and c
 | Chain ID | `61999` |
 | Contract address | [`0x23377D847b0BaD5C918Db79B8Fe2Aeb7fF5F55B9`](https://explorer-studio.genlayer.com/address/0x23377D847b0BaD5C918Db79B8Fe2Aeb7fF5F55B9) |
 | Explorer | https://explorer-studio.genlayer.com |
-| Create tx | _pending_ |
-| Judge tx | _pending_ |
-| Finalize tx | _pending_ |
+| Create tx (RFP 2) | [`0x5b8cbc11...c8efc5`](https://explorer-studio.genlayer.com/transactions/0x5b8cbc11ebfa9d08c9c9a6533b416e0e746fff24fc358d8d0eaeeea7aec8efc5) |
+| Judge tx (RFP 2, RESPONSIVE) | [`0x45e12ff5...1d9689`](https://explorer-studio.genlayer.com/transactions/0x45e12ff50b182f028f8309d9a5ad82595a5a2a21b5cf34242a8dfbad0a1d9689) |
+| Finalize tx (RFP 2, paid winner) | [`0x3a45e018...0c0bb1`](https://explorer-studio.genlayer.com/transactions/0x3a45e018577fb1867a5a1c0d4123edcece29e22667c04df41bdaa4adf00c0bb1) |
+| Finalize tx (RFP 1, refund) | [`0xb7b47f38...649b07`](https://explorer-studio.genlayer.com/transactions/0xb7b47f38d38106cb2b11c97ca948d4a558d8cb80ab4a71f5a9d19f45e2649b07) |
 | Pre-seeded expired RFP id | _pending_ |
+
+### Live test results (Studionet, tiny prizes, throwaway accounts)
+
+- **Pay path (RFP 2):** one bid judged RESPONSIVE 100 by validators, finalize paid 0.01 GEN. The winner's balance rose by exactly 0.01 GEN and the contract balance went to 0.
+- **Refund path (RFP 1, the Lagos sample):** `civic_fluff` judged NON-RESPONSIVE (0), `civic_ok` PARTIAL (80), `civic_half` PARTIAL (40). No RESPONSIVE bid, so finalize refunded the sponsor in full. A second finalize was rejected ("RFP is already finalized") and nothing was sent twice.
+- **Validator splits:** one `civic_half` judgement ended `MAJORITY_DISAGREE` after 4 rounds and stored nothing. Calling `judge_bid` again succeeded. The UI reports this as a failure with a Retry button.
+- **Judge latency:** 30 to 90 seconds per bid on Studionet.
+- `civic_ok` was PARTIAL, not RESPONSIVE, because the sample evidence link is a stand-in repo (see below). Use evidence you control for the intended result.
 
 ## How it works
 
@@ -87,7 +96,7 @@ The sample bids point at `https://github.com/vitejs/vite` (and `https://example.
 
 ## Known limitations
 
-- AI variance: validators can disagree on borderline bids; the score tolerance and exact-verdict rule reduce this but do not remove it.
+- AI variance: validators can disagree (seen live: a borderline bid needed a second `judge_bid` call) on borderline bids; the score tolerance and exact-verdict rule reduce this but do not remove it.
 - Evidence fetch can fail; the contract then judges the on-chain summary alone and adds `URI_UNREACHABLE`.
 - Test networks only. Not audited. Not legal advice.
 - v1 has no partial payouts, no multiple winners, no sealed bids and no appeals.

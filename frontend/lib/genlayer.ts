@@ -160,17 +160,27 @@ export async function sendWrite(
   return { txId, returnValue: extractReturn(receipt) };
 }
 
+interface LeaderResult {
+  status?: string;
+  payload?: { readable?: string } | string;
+}
+
 interface ReceiptLike {
-  statusName?: string;
-  txExecutionResultName?: string;
-  consensus_data?: { leader_receipt?: { result?: unknown }[] };
-  txDataDecoded?: unknown;
-  result?: unknown;
+  result_name?: string;
+  consensus_data?: { leader_receipt?: { result?: LeaderResult }[] };
+}
+
+/** Consensus outcomes where validators agreed and the state change was applied. */
+const AGREED = new Set(["AGREE", "MAJORITY_AGREE"]);
+
+function leaderResult(receipt: ReceiptLike): LeaderResult | undefined {
+  return receipt.consensus_data?.leader_receipt?.[0]?.result;
 }
 
 /**
  * Waits until validators accept the transaction (state is readable from then on).
- * Throws with a readable message when the contract rejected it.
+ * Throws with a readable message when the contract rejected the call or validators disagreed.
+ * A contract UserError arrives as a leader result with status "rollback", not as a thrown RPC error.
  */
 export async function waitForReceipt(txId: string): Promise<ReceiptLike> {
   const client = getClient();
@@ -180,29 +190,26 @@ export async function waitForReceipt(txId: string): Promise<ReceiptLike> {
     retries: 400,
     interval: 3000,
   })) as ReceiptLike;
-  if (receipt.txExecutionResultName === "FINISHED_WITH_ERROR") {
-    throw new Error(`Contract rejected the call: ${readRevertReason(receipt)}`);
+  if (receipt.result_name && !AGREED.has(receipt.result_name)) {
+    // e.g. MAJORITY_DISAGREE: the transaction finalized but nothing was stored. Safe to retry.
+    throw new Error(`Validators did not agree (${receipt.result_name}). Nothing was stored. Retry.`);
+  }
+  const res = leaderResult(receipt);
+  if (res?.status && res.status !== "return") {
+    throw new Error(`Contract rejected the call: ${readPayload(res) || "no reason returned"}`);
   }
   return receipt;
 }
 
-function readRevertReason(receipt: ReceiptLike): string {
-  const first = receipt.consensus_data?.leader_receipt?.[0]?.result as
-    | { payload?: { readable?: string } | string }
-    | undefined;
-  const payload = first?.payload;
-  if (typeof payload === "string") return payload;
-  if (payload && typeof payload.readable === "string") return payload.readable;
-  return "no reason returned. Check the explorer for the transaction.";
+function readPayload(res: LeaderResult): string {
+  const p = res.payload;
+  if (typeof p === "string") return p;
+  return typeof p?.readable === "string" ? p.readable : "";
 }
 
 function extractReturn(receipt: ReceiptLike): string {
-  const first = receipt.consensus_data?.leader_receipt?.[0]?.result as
-    | { payload?: { readable?: string } }
-    | undefined;
-  const readable = first?.payload?.readable;
-  if (typeof readable === "string") return readable.replace(/^"|"$/g, "").replace(/\\"/g, '"');
-  return "";
+  const res = leaderResult(receipt);
+  return res ? readPayload(res).replace(/^"|"$/g, "").replace(/\\"/g, '"') : "";
 }
 
 export function explorerTxUrl(txId: string): string {
