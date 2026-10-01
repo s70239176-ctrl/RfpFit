@@ -8,15 +8,15 @@ Sponsors of bounties and grants pay out on whoever writes the best pitch, or on 
 
 ## Contract
 
-**Not deployed yet.** Fill in after deploying `contracts/rfpfit_escrow.py`. Always verify the RPC and chain ID on the official GenLayer network page before deploying; networks change.
+Deployed by the project owner to GenLayer Studionet. Always verify the RPC and chain ID on the official GenLayer network page; networks change.
 
 | | |
 |---|---|
-| Network | _pending_ |
-| RPC | _pending_ |
-| Chain ID | _pending_ |
-| Contract address | _pending_ |
-| Explorer | _pending_ |
+| Network | Studionet |
+| RPC | `https://studio.genlayer.com/api` |
+| Chain ID | `61999` |
+| Contract address | [`0x23377D847b0BaD5C918Db79B8Fe2Aeb7fF5F55B9`](https://explorer-studio.genlayer.com/address/0x23377D847b0BaD5C918Db79B8Fe2Aeb7fF5F55B9) |
+| Explorer | https://explorer-studio.genlayer.com |
 | Create tx | _pending_ |
 | Judge tx | _pending_ |
 | Finalize tx | _pending_ |
@@ -93,7 +93,7 @@ The sample bids point at `https://github.com/vitejs/vite` (and `https://example.
 - v1 has no partial payouts, no multiple winners, no sealed bids and no appeals.
 - Judgement takes minutes; the UI says so instead of pretending to be instant.
 - Time comes from the transaction datetime (`gl.message_raw["datetime"]`). The UI countdown uses your browser clock, which can differ from chain time by seconds.
-- Payout uses a finalized-only transfer (`on="finalized"`), so funds arrive after the appeal window, not at acceptance.
+- The payout transfer to a wallet address uses the default message timing, so funds may move at acceptance, before the appeal window ends.
 - Contract tests run in the direct runner with mocked LLM/web and a patched non-deterministic path. Real validator consensus and the EOA transfer are only exercised on a live network.
 
 ## Roadmap
