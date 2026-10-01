@@ -177,19 +177,41 @@ function leaderResult(receipt: ReceiptLike): LeaderResult | undefined {
   return receipt.consensus_data?.leader_receipt?.[0]?.result;
 }
 
+const MAX_POLL_FAILURES = 6;
+
+/**
+ * Polls for the receipt and rides out transient RPC failures (the Studio gateway sometimes answers
+ * with an HTML error page mid-poll while the transaction carries on fine).
+ */
+async function pollReceipt(txId: string): Promise<ReceiptLike> {
+  const client = getClient();
+  for (let failures = 1; ; failures++) {
+    try {
+      return (await client.waitForTransactionReceipt({
+        hash: txId as Hash,
+        status: TransactionStatus.ACCEPTED,
+        retries: 400,
+        interval: 3000,
+      })) as ReceiptLike;
+    } catch (err) {
+      if (failures >= MAX_POLL_FAILURES) {
+        const why = err instanceof Error ? err.message.split("\n")[0].slice(0, 120) : "unknown error";
+        throw new Error(
+          `Lost contact with the network while waiting on transaction ${txId}. It may still have been processed, so refresh before retrying. (${why})`,
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 4000 * failures));
+    }
+  }
+}
+
 /**
  * Waits until validators accept the transaction (state is readable from then on).
  * Throws with a readable message when the contract rejected the call or validators disagreed.
  * A contract UserError arrives as a leader result with status "rollback", not as a thrown RPC error.
  */
 export async function waitForReceipt(txId: string): Promise<ReceiptLike> {
-  const client = getClient();
-  const receipt = (await client.waitForTransactionReceipt({
-    hash: txId as Hash,
-    status: TransactionStatus.ACCEPTED,
-    retries: 400,
-    interval: 3000,
-  })) as ReceiptLike;
+  const receipt = await pollReceipt(txId);
   if (receipt.result_name && !AGREED.has(receipt.result_name)) {
     // e.g. MAJORITY_DISAGREE: the transaction finalized but nothing was stored. Safe to retry.
     throw new Error(`Validators did not agree (${receipt.result_name}). Nothing was stored. Retry.`);

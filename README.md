@@ -27,6 +27,7 @@ Deployed by the project owner to GenLayer Studionet. Always verify the RPC and c
 
 - **Pay path (RFP 2):** one bid judged RESPONSIVE 100 by validators, finalize paid 0.01 GEN. The winner's balance rose by exactly 0.01 GEN and the contract balance went to 0.
 - **Refund path (RFP 1, the Lagos sample):** `civic_fluff` judged NON-RESPONSIVE (0), `civic_ok` PARTIAL (80), `civic_half` PARTIAL (40). No RESPONSIVE bid, so finalize refunded the sponsor in full. A second finalize was rejected ("RFP is already finalized") and nothing was sent twice.
+- **End-to-end re-run through the app's own client code (RFPs 7 to 9):** 25 of 25 checks passed. Covered wallet chain-switching, create, bid, every rejection path (duplicate bid, http link, early judge, early finalize, late bid, double judge, double finalize), RESPONSIVE and NON-RESPONSIVE judging, the sponsor-as-bidder flag, pay, refund, zero-bid refund, stats, and exact balance changes. It also injected HTML gateway errors during receipt polling and the app rode them out.
 - **Validator splits:** one `civic_half` judgement ended `MAJORITY_DISAGREE` after 4 rounds and stored nothing. Calling `judge_bid` again succeeded. The UI reports this as a failure with a Retry button.
 - **Judge latency:** 30 to 90 seconds per bid on Studionet.
 - `civic_ok` was PARTIAL, not RESPONSIVE, because the sample evidence link is a stand-in repo (see below). Use evidence you control for the intended result.

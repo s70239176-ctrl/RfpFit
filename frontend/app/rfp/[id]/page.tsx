@@ -81,7 +81,15 @@ export default function RfpPage() {
               <span className="label">{bids.length} total</span>
             </div>
             {bids.length === 0 ? (
-              <EmptyState message="This brief is live. Be first, or wait for the deadline." />
+              <EmptyState
+                message={
+                  rfp.finalized
+                    ? "No bids were submitted. The prize was refunded to the sponsor."
+                    : deadlinePassed
+                      ? "No bids were submitted before the deadline. Finalize to refund the sponsor."
+                      : "This brief is live. Be first, or wait for the deadline."
+                }
+              />
             ) : (
               bids.map(({ bid, verdict }, i) => (
                 <div key={bid.bidId} className="reveal" style={{ ["--i" as string]: i + 2 }}>

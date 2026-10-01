@@ -24,13 +24,23 @@ export interface WriteResult {
   txId: string;
 }
 
+/** Reads retry briefly: the public RPC gateway occasionally answers with an HTML error page. */
 async function read(functionName: string, args: string[] = []): Promise<string> {
-  const out = await getClient().readContract({
-    address: requireContract(),
-    functionName,
-    args,
-  });
-  return typeof out === "string" ? out : String(out ?? "");
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const out = await getClient().readContract({
+        address: requireContract(),
+        functionName,
+        args,
+      });
+      return typeof out === "string" ? out : String(out ?? "");
+    } catch (err) {
+      lastError = err;
+      await new Promise((resolve) => setTimeout(resolve, 800 * (attempt + 1)));
+    }
+  }
+  throw lastError;
 }
 
 export async function getRfp(id: string): Promise<Rfp | null> {

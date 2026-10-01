@@ -79,7 +79,7 @@ export function BidForm({
   if (closed || full) {
     return (
       <p className="panel p-4 text-sm text-muted">
-        {full && !closed ? "This brief has the maximum of 8 bids." : "Bidding is closed. Judgement and settlement happen next."}
+        {full && !closed ? "This brief has the maximum of 8 bids." : rfp.finalized ? "Bidding is closed. This brief is settled." : "Bidding is closed. Judgement and settlement happen next."}
       </p>
     );
   }
