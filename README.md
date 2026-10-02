@@ -17,8 +17,23 @@ Deployed by the project owner to GenLayer Studionet. Always verify the RPC and c
 | Chain ID | `61999` |
 | Contract address | [`0x76124F140564Fe58a0B600caC51577702Ea176D7`](https://explorer-studio.genlayer.com/address/0x76124F140564Fe58a0B600caC51577702Ea176D7) |
 | Explorer | https://explorer-studio.genlayer.com |
-| Create / judge / finalize txs | _pending: run a flow on this deployment and record them_ |
-| Pre-seeded expired RFP id | _pending_ |
+| Create tx (brief 2) | [`0x3357ceaa...9595f2`](https://explorer-studio.genlayer.com/transactions/0x3357ceaaa73c10eb63df7d53bba70410db46cc778f144d4bac76818d3c9595f2) |
+| Judge tx (brief 2, RESPONSIVE) | [`0xbe270505...086e69`](https://explorer-studio.genlayer.com/transactions/0xbe27050511cf05b2ffb4d0fa2d640797689d05b2ad65ce08feb43a8c7b086e69) |
+| Finalize tx (brief 2, paid winner) | [`0xc895c962...3a1d4f`](https://explorer-studio.genlayer.com/transactions/0xc895c962e409e111a15ffaabd698305eb9e88fa5716da1c45c4f6406c43a1d4f) |
+| Finalize tx (brief 3, refund) | [`0x4b78ad74...75e639`](https://explorer-studio.genlayer.com/transactions/0x4b78ad74a3429e69bf70d2c5c50678676df8cc007b853351c9e49ccaa675e639) |
+| Finalize tx (brief 4, unreachable evidence refunded) | [`0xc75adb5d...12b73d`](https://explorer-studio.genlayer.com/transactions/0xc75adb5d6e4c3ef4c7aa34df2cdbb95724c700ca6766a268e535fef6ac12b73d) |
+| Pre-seeded expired RFP id | **1** (Lagos sample, 3 bids, deadline passed, not yet judged) |
+
+### Seeded briefs on this deployment
+
+| Brief | State | What it shows |
+|---|---|---|
+| 1 | Expired, 3 bids, unjudged | Ready for a reviewer to click Request judgement, then Finalize. The sample bids use a stand-in evidence link, so `civic_ok` usually judges PARTIAL and the brief ends in a refund. |
+| 2 | PAID | A bid backed by a real repo judged RESPONSIVE 100 and was paid 0.01 GEN. |
+| 3 | REFUNDED | Only a generic bid, judged NON-RESPONSIVE, so the sponsor was refunded. |
+| 4 | REFUNDED | The only bid claimed everything but its evidence link does not exist. Flagged `URI_UNREACHABLE`, not paid, sponsor refunded. |
+
+The contract holds exactly brief 1's prize (0.01 GEN) and nothing else.
 
 
 ### Previous deployment (before the evidence-availability fix)
