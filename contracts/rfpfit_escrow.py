@@ -43,6 +43,8 @@ _RISK_FLAGS = (
 _MAX_BIDS = 8
 _LATEST = 20
 _SCORE_TOLERANCE = 5
+# A bid whose submitted evidence URI cannot be fetched is never RESPONSIVE and never scores above this.
+_UNVERIFIED_SCORE_CAP = 60
 
 _REQ_ID = re.compile(r"^R[1-9][0-9]?$")
 _BID_ID = re.compile(r"^[A-Za-z0-9_]{3,32}$")
@@ -92,13 +94,19 @@ def _strip_markup(html: str) -> str:
 
 
 def _fetch_evidence(url: str) -> str:
-    """Best-effort page text. Returns "" on any failure; never raises."""
+    """Readable page text, or "" when the evidence is unreachable. Never raises.
+
+    "Unreachable" means: the request failed, the HTTP status is not 2xx, or the page has no
+    readable text. The SDK response exposes the code as `status`.
+    """
     try:
         res = gl.nondet.web.get(url)
-        status = getattr(res, "status_code", 200)
-        if isinstance(status, int) and status >= 400:
+        status = getattr(res, "status", getattr(res, "status_code", None))
+        if not isinstance(status, int) or not 200 <= status < 300:
             return ""
-        body = getattr(res, "body", res)
+        body = getattr(res, "body", None)
+        if body is None:
+            return ""
         if isinstance(body, bytes):
             body = body.decode("utf-8", "replace")
         return _strip_markup(str(body))[:6000]
@@ -119,8 +127,46 @@ def _id_list(raw: object, allowed: list, field: str) -> list:
     return out
 
 
-def _normalize(raw: object, req_ids: list) -> dict:
-    """Validate a model verdict against the locked schema, or raise."""
+def _evidence_verified(evidence_uri: str, evidence_used: str) -> bool:
+    """True when the bid has no URI to check, or its URI was actually fetched and read."""
+    return (not evidence_uri) or evidence_used == "BOTH"
+
+
+def _is_payable(verdict: dict, evidence_uri: str) -> bool:
+    """Only a RESPONSIVE verdict backed by reachable evidence may win the prize."""
+    return verdict["verdict"] == "RESPONSIVE" and _evidence_verified(evidence_uri, verdict.get("evidence_used", ""))
+
+
+def _require_verified(verdict: dict) -> dict:
+    """Deterministic rule for an unreachable evidence URI: cannot be RESPONSIVE, score is capped.
+
+    Claims that were "met" only on the bidder's own word become "unclear" instead.
+    """
+    if verdict["verdict"] == "RESPONSIVE":
+        verdict["verdict"] = "PARTIAL"
+        unclear = list(verdict["requirements_unclear"])
+        for ident in verdict["requirements_met"]:
+            if ident not in unclear:
+                unclear.append(ident)
+        verdict["requirements_unclear"] = unclear
+        verdict["requirements_met"] = []
+        verdict["reasons"] = (
+            ["Evidence URI unreachable: claims cannot be verified, so this bid cannot be RESPONSIVE."]
+            + verdict["reasons"]
+        )[:3]
+    verdict["score"] = min(verdict["score"], _UNVERIFIED_SCORE_CAP)
+    if "URI_UNREACHABLE" not in verdict["risk_flags"]:
+        verdict["risk_flags"].append("URI_UNREACHABLE")
+    return verdict
+
+
+def _normalize(raw: object, req_ids: list, unverified: bool = False) -> dict:
+    """Validate a verdict against the locked schema, or raise.
+
+    `unverified` means the bid submitted an evidence URI that could not be fetched. Such a verdict
+    may not be RESPONSIVE or exceed the score cap; the met/missing label checks are relaxed because
+    _require_verified moves requirements from "met" to "unclear".
+    """
     if not isinstance(raw, dict):
         raise gl.vm.UserError("model did not return a JSON object")
     verdict = str(raw.get("verdict", "")).strip()
@@ -138,10 +184,16 @@ def _normalize(raw: object, req_ids: list) -> dict:
     met = _id_list(raw.get("requirements_met", []), req_ids, "requirements_met")
     missing = _id_list(raw.get("requirements_missing", []), req_ids, "requirements_missing")
     unclear = _id_list(raw.get("requirements_unclear", []), req_ids, "requirements_unclear")
-    if verdict == "RESPONSIVE" and (missing or unclear or not met):
-        raise gl.vm.UserError("RESPONSIVE requires every requirement met")
-    if verdict == "PARTIAL" and (not met or not missing):
-        raise gl.vm.UserError("PARTIAL requires at least one met and one missing")
+    if unverified:
+        if verdict == "RESPONSIVE":
+            raise gl.vm.UserError("RESPONSIVE requires reachable evidence")
+        if score > _UNVERIFIED_SCORE_CAP:
+            raise gl.vm.UserError("score exceeds the cap for unreachable evidence")
+    else:
+        if verdict == "RESPONSIVE" and (missing or unclear or not met):
+            raise gl.vm.UserError("RESPONSIVE requires every requirement met")
+        if verdict == "PARTIAL" and (not met or not missing):
+            raise gl.vm.UserError("PARTIAL requires at least one met and one missing")
     reasons_raw = raw.get("reasons", [])
     if not isinstance(reasons_raw, list):
         raise gl.vm.UserError("reasons must be a list")
@@ -398,8 +450,10 @@ class RfpFitEscrow(gl.Contract):
                     verdict["evidence_used"] = "BOTH"
                 else:
                     verdict["evidence_used"] = "ONCHAIN_SUMMARY"
-                    if uri and "URI_UNREACHABLE" not in verdict["risk_flags"]:
-                        verdict["risk_flags"].append("URI_UNREACHABLE")
+                    if uri:
+                        # A URI was submitted but could not be read: the bidder's own summary
+                        # is not enough to win the prize.
+                        verdict = _require_verified(verdict)
                 return verdict
             raise gl.vm.UserError("judgement failed: " + last)
 
@@ -411,19 +465,29 @@ class RfpFitEscrow(gl.Contract):
                 return False
             lead = leader_result.calldata
             try:
-                _normalize(lead, req_ids)
+                # Availability condition: a leader that could not read the evidence may not
+                # claim RESPONSIVE, and its verdict is checked under the relaxed unverified rules.
+                lead_verified = _evidence_verified(uri, str(lead.get("evidence_used", "")))
+                _normalize(lead, req_ids, unverified=not lead_verified)
                 mine = evaluate()
             except Exception:
+                return False
+            # Availability condition: the validator must itself reach the evidence before it
+            # accepts RESPONSIVE. An unreachable page for this validator rejects the verdict.
+            if lead["verdict"] == "RESPONSIVE" and not _evidence_verified(uri, str(mine.get("evidence_used", ""))):
                 return False
             if lead["verdict"] != mine["verdict"]:
                 return False
             return abs(int(lead["score"]) - int(mine["score"])) <= _SCORE_TOLERANCE
 
         result = gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
-        verdict = _normalize(result, req_ids)
-        # Evidence provenance is not part of consensus; carry the leader's value.
+        # Evidence provenance is carried from the leader. The availability rule is re-checked
+        # here, so a RESPONSIVE verdict without verified evidence can never be stored.
         used = str(result.get("evidence_used", "ONCHAIN_SUMMARY"))
-        verdict["evidence_used"] = used if used in ("ONCHAIN_SUMMARY", "URI", "BOTH") else "ONCHAIN_SUMMARY"
+        if used not in ("ONCHAIN_SUMMARY", "URI", "BOTH"):
+            used = "ONCHAIN_SUMMARY"
+        verdict = _normalize(result, req_ids, unverified=not _evidence_verified(uri, used))
+        verdict["evidence_used"] = used
         if "URI_UNREACHABLE" in result.get("risk_flags", []) and "URI_UNREACHABLE" not in verdict["risk_flags"]:
             verdict["risk_flags"].append("URI_UNREACHABLE")
         if bid["bidder"].lower() == rfp["sponsor"].lower() and "SPONSOR_IS_BIDDER" not in verdict["risk_flags"]:
@@ -453,7 +517,9 @@ class RfpFitEscrow(gl.Contract):
         best = -1
         for bid_id in sorted(_load(self.bid_index[rfp_id])):
             verdict = _load(self.verdicts[_key(rfp_id, bid_id)])
-            if verdict["verdict"] == "RESPONSIVE" and verdict["score"] > best:
+            uri = _load(self.bids[_key(rfp_id, bid_id)])["evidence_uri"]
+            # Payout re-checks eligibility: unreachable evidence can never win the escrow.
+            if _is_payable(verdict, uri) and verdict["score"] > best:
                 best = verdict["score"]
                 winner_bid = bid_id
         prize = int(rfp["prize_wei"])

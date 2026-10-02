@@ -32,6 +32,8 @@ Deployed by the project owner to GenLayer Studionet. Always verify the RPC and c
 - **Judge latency:** 30 to 90 seconds per bid on Studionet.
 - `civic_ok` was PARTIAL, not RESPONSIVE, because the sample evidence link is a stand-in repo (see below). Use evidence you control for the intended result.
 
+> **Redeploy pending:** the evidence-availability rule above is in `contracts/rfpfit_escrow.py` and tested, but the contract address listed here was deployed before it. Redeploy and update the address, `NEXT_PUBLIC_CONTRACT_ADDRESS` and this note.
+
 ## How it works
 
 1. Sponsor locks the prize (native GEN, sent with `create_rfp`) and freezes a rubric of requirement IDs (`R1`, `R2`, ...).
@@ -98,7 +100,7 @@ The sample bids point at `https://github.com/vitejs/vite` (and `https://example.
 ## Known limitations
 
 - AI variance: validators can disagree (seen live: a borderline bid needed a second `judge_bid` call) on borderline bids; the score tolerance and exact-verdict rule reduce this but do not remove it.
-- Evidence fetch can fail; the contract then judges the on-chain summary alone and adds `URI_UNREACHABLE`.
+- Evidence fetch can fail. If a bid submitted an evidence link and the contract cannot read it (request failed, non-2xx status, or no readable text), the verdict can never be RESPONSIVE: it is downgraded to PARTIAL with the score capped at 60 and `URI_UNREACHABLE` set, validators reject any RESPONSIVE verdict they cannot verify themselves, and `finalize` re-checks this at payout. A bid with no link at all is still judged on its summary. A page that needs JavaScript to show its text can read as unreachable.
 - Test networks only. Not audited. Not legal advice.
 - v1 has no partial payouts, no multiple winners, no sealed bids and no appeals.
 - Judgement takes minutes; the UI says so instead of pretending to be instant.
