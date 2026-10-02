@@ -15,24 +15,37 @@ Deployed by the project owner to GenLayer Studionet. Always verify the RPC and c
 | Network | Studionet |
 | RPC | `https://studio.genlayer.com/api` |
 | Chain ID | `61999` |
-| Contract address | [`0x23377D847b0BaD5C918Db79B8Fe2Aeb7fF5F55B9`](https://explorer-studio.genlayer.com/address/0x23377D847b0BaD5C918Db79B8Fe2Aeb7fF5F55B9) |
+| Contract address | [`0x76124F140564Fe58a0B600caC51577702Ea176D7`](https://explorer-studio.genlayer.com/address/0x76124F140564Fe58a0B600caC51577702Ea176D7) |
 | Explorer | https://explorer-studio.genlayer.com |
+| Create / judge / finalize txs | _pending: run a flow on this deployment and record them_ |
+| Pre-seeded expired RFP id | _pending_ |
+
+
+### Previous deployment (before the evidence-availability fix)
+
+`0x23377D847b0BaD5C918Db79B8Fe2Aeb7fF5F55B9` ([explorer](https://explorer-studio.genlayer.com/address/0x23377D847b0BaD5C918Db79B8Fe2Aeb7fF5F55B9)). Its transactions, kept as evidence of the earlier end-to-end runs:
+
+| | |
+|---|---|
 | Create tx (RFP 2) | [`0x5b8cbc11...c8efc5`](https://explorer-studio.genlayer.com/transactions/0x5b8cbc11ebfa9d08c9c9a6533b416e0e746fff24fc358d8d0eaeeea7aec8efc5) |
 | Judge tx (RFP 2, RESPONSIVE) | [`0x45e12ff5...1d9689`](https://explorer-studio.genlayer.com/transactions/0x45e12ff50b182f028f8309d9a5ad82595a5a2a21b5cf34242a8dfbad0a1d9689) |
 | Finalize tx (RFP 2, paid winner) | [`0x3a45e018...0c0bb1`](https://explorer-studio.genlayer.com/transactions/0x3a45e018577fb1867a5a1c0d4123edcece29e22667c04df41bdaa4adf00c0bb1) |
 | Finalize tx (RFP 1, refund) | [`0xb7b47f38...649b07`](https://explorer-studio.genlayer.com/transactions/0xb7b47f38d38106cb2b11c97ca948d4a558d8cb80ab4a71f5a9d19f45e2649b07) |
-| Pre-seeded expired RFP id | _pending_ |
 
 ### Live test results (Studionet, tiny prizes, throwaway accounts)
+
+The pay, refund and end-to-end runs below were made on the previous deployment. The evidence-availability rule was verified on a separate copy of the fixed code (`0x0f140AE9B88BFfC6c63C262A08f8FdfEaD21ccDc`) and is identical to the code now deployed.
+
 
 - **Pay path (RFP 2):** one bid judged RESPONSIVE 100 by validators, finalize paid 0.01 GEN. The winner's balance rose by exactly 0.01 GEN and the contract balance went to 0.
 - **Refund path (RFP 1, the Lagos sample):** `civic_fluff` judged NON-RESPONSIVE (0), `civic_ok` PARTIAL (80), `civic_half` PARTIAL (40). No RESPONSIVE bid, so finalize refunded the sponsor in full. A second finalize was rejected ("RFP is already finalized") and nothing was sent twice.
 - **End-to-end re-run through the app's own client code (RFPs 7 to 9):** 25 of 25 checks passed. Covered wallet chain-switching, create, bid, every rejection path (duplicate bid, http link, early judge, early finalize, late bid, double judge, double finalize), RESPONSIVE and NON-RESPONSIVE judging, the sponsor-as-bidder flag, pay, refund, zero-bid refund, stats, and exact balance changes. It also injected HTML gateway errors during receipt polling and the app rode them out.
+- **Evidence availability (verification copy, 10 of 10 checks):** a bid whose evidence link was a nonexistent GitHub URL was flagged `URI_UNREACHABLE`, recorded as `ONCHAIN_SUMMARY` and not paid (sponsor refunded). A bid with the real repo was fetched (`BOTH`), judged RESPONSIVE 100 and paid exactly one prize. Mocked tests also cover the downgrade, the validator rule and the payout-time check.
 - **Validator splits:** one `civic_half` judgement ended `MAJORITY_DISAGREE` after 4 rounds and stored nothing. Calling `judge_bid` again succeeded. The UI reports this as a failure with a Retry button.
 - **Judge latency:** 30 to 90 seconds per bid on Studionet.
 - `civic_ok` was PARTIAL, not RESPONSIVE, because the sample evidence link is a stand-in repo (see below). Use evidence you control for the intended result.
 
-> **Redeploy pending:** the evidence-availability rule above is in `contracts/rfpfit_escrow.py` and tested, but the contract address listed here was deployed before it. Redeploy and update the address, `NEXT_PUBLIC_CONTRACT_ADDRESS` and this note.
+> The deployed code was fetched from the chain (`gen_getContractCode`) and is byte-identical to `contracts/rfpfit_escrow.py`, including the evidence-availability rule below.
 
 ## How it works
 
